@@ -1,29 +1,28 @@
-name: CI/CD - DEV (Validación básica)
+name: CI/CD - DEV
 
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
     paths:
       - 'infra/dev/**'
       - 'dags/**'
 
 jobs:
   validate-dags:
-    name: Validar DAGs DEV
+    name: Validar DAGs Airflow (DEV)
     runs-on: ubuntu-latest
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Validar DAGs Airflow
+      - name: Validar DAGs con Python
         run: |
           unzip dags/GCP_ETL_CI_CD_AS400.zip -d dags/
           pip install apache-airflow
-          python -m py_compile dags/dag_as400_etl.py || echo "::error:: DAG inválido"
+          python -m py_compile dags/dag_as400_etl.py || echo "::error:: DAG no válido"
 
   terraform-validate:
-    name: Validar Terraform DEV
+    name: Terraform Validate (DEV)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -37,8 +36,8 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Terraform Init
+      - name: Init
         run: terraform init
 
-      - name: Terraform Validate
+      - name: Validate
         run: terraform validate

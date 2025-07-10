@@ -1,0 +1,52 @@
+name: CI/CD - QA
+
+on:
+  push:
+    branches: [qa]
+    paths:
+      - 'infra/qa/**'
+      - 'dags/**'
+
+jobs:
+  validate-dags:
+    name: Validar DAGs Airflow (QA)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Validar DAGs con Python
+        run: |
+          unzip dags/GCP_ETL_CI_CD_AS400.zip -d dags/
+          pip install apache-airflow
+          python -m py_compile dags/dag_as400_etl.py || echo "::error:: DAG no válido"
+
+  terraform-plan:
+    name: Terraform Plan (QA)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/qa
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v3
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.5.7
+
+      - name: Init
+        run: terraform init
+
+      - name: Terraform Plan
+        run: terraform plan
+
+  deploy:
+    name: Despliegue GCP (QA)
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    needs: [validate-dags, terraform-plan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Despliegue simulado
+        run: echo "Despliegue del entorno QA habilitado sólo desde main"

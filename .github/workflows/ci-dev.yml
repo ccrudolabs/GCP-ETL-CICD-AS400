@@ -1,28 +1,29 @@
-name: CI/CD - DEV
+name: CI/CD - DEV (Validación básica)
 
 on:
   push:
-    branches: [dev]
+    branches:
+      - dev
     paths:
       - 'infra/dev/**'
       - 'dags/**'
 
 jobs:
   validate-dags:
-    name: Validar DAGs Airflow (DEV)
+    name: Validar DAGs DEV
     runs-on: ubuntu-latest
     steps:
       - name: Checkout código
         uses: actions/checkout@v3
 
-      - name: Validar DAGs con Python
+      - name: Validar DAGs Airflow
         run: |
           unzip dags/GCP_ETL_CI_CD_AS400.zip -d dags/
           pip install apache-airflow
-          python -m py_compile dags/dag_as400_etl.py || echo "::error:: DAG no válido"
+          python -m py_compile dags/dag_as400_etl.py || echo "::error:: DAG inválido"
 
-  terraform-plan:
-    name: Terraform Plan (DEV)
+  terraform-validate:
+    name: Validar Terraform DEV
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,17 +37,8 @@ jobs:
         with:
           terraform_version: 1.5.7
 
-      - name: Init
+      - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Plan
-        run: terraform plan
-
-  deploy:
-    name: Despliegue GCP (DEV)
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    needs: [validate-dags, terraform-plan]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Despliegue simulado
-        run: echo "Despliegue del entorno DEV habilitado sólo desde main"
+      - name: Terraform Validate
+        run: terraform validate

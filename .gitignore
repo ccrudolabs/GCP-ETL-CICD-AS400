@@ -1,0 +1,14 @@
+﻿# Terraform
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Python / Airflow
+__pycache__/
+*.pyc
+
+# Binarios y empaquetados
+*.zip
+*.exe
+*.pptx
+*.png

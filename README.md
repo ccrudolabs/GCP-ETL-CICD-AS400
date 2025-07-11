@@ -75,7 +75,6 @@ AS/400 ➝ Extracción (ODBC/API/FTP)
 ## 🖼️ Diagramas de Arquitectura
 
 ![Layout general GCP](docs/Layout_GCP.png)  
-![Layout ETL 10 julio](docs/Layout_10_jul_2025.png)  
 ![Resumen GCP](docs/GCP.png)
 
 ---

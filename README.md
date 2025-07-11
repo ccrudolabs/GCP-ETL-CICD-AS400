@@ -1,83 +1,93 @@
-# GCP ETL + CI/CD con integración AS/400
 
-Este repositorio contiene una arquitectura completa para replicar y procesar datos provenientes de un sistema IBM AS/400 utilizando servicios nativos de Google Cloud Platform.
+# GCP-ETL-CICD-AS400
 
----
-
-## 📌 Arquitectura
-
-![Arquitectura](GCP.png)
-
-- **AS/400**: Sistema legado origen de los datos
-- **Extraction**: Proceso de extracción vía ODBC, FTP, API u otros conectores
-- **Cloud Composer**: Orquestación con Airflow
-- **Dataflow**: Transformación y procesamiento de datos
-- **BigQuery**: Almacenamiento y análisis de datos
-- **Looker**: Visualización y dashboards
-- **Cloud Build**: CI/CD para automatizar despliegues
-- **GitHub + Terraform**: Infraestructura como código
+Diseño e implementación de una arquitectura moderna, escalable y segura sobre Google Cloud Platform (GCP), orientada a flujos ETL desde AS/400 con principios CI/CD y ambientes segregados: DEV, QA y PRD.
 
 ---
 
-## 🧱 Infraestructura como Código (IaC)
+## 🌐 Arquitectura General Multientorno
 
-Archivo: `main.tf`
-
-Despliega:
-- Composer Environment
-- IAM roles
-- Configuración regional
-
-```bash
-terraform init
-terraform apply -var 'project_id=your-project' -var 'region=us-central1'
+```
+AS/400 ➝ Extracción (ODBC/API/FTP)
+        ➝ Cloud Storage (/raw/, /staging/)
+            ➝ Cloud Composer (DAGs)
+                ➝ Dataflow (Batch / Streaming)
+                    ➝ BigQuery (datasets separados)
+                        ➝ Looker (dashboards BI)
 ```
 
 ---
 
-## 🚀 CI/CD con Cloud Build
+## 🧱 Componentes por Entorno
 
-Archivo: `cloudbuild.yaml`
+| Entorno | Composer     | Bucket Storage       | Dataset BigQuery | Workspace Terraform |
+| ------- | ------------ | -------------------- | ---------------- | ------------------- |
+| DEV     | composer-dev | gs://etl-dev-bucket | bq_etl_dev     | dev                 |
+| QA      | composer-qa  | gs://etl-qa-bucket  | bq_etl_qa      | qa                  |
+| PRD     | composer-prd | gs://etl-prd-bucket | bq_etl_prd     | prd                 |
 
-- Copia DAGs a Composer Bucket
-- Automatiza actualizaciones
+---
 
-```bash
-gcloud builds submit --config=cloudbuild.yaml
+## 🔁 Flujo CI/CD por Rama
+
+| Rama Git | Acción Automatizada        | Herramientas            |
+| -------- | -------------------------- | ----------------------- |
+| `dev`    | Validación DAGs + Dataflow | Cloud Build + Pytest    |
+| `qa`     | Despliegue en entorno QA   | Cloud Build + Terraform |
+| `main`   | Despliegue en Producción   | Cloud Build + Terraform |
+
+---
+
+## 📦 Estructura del Repositorio
+
+```
+├── infra/
+│   ├── dev/           # Workspace Terraform DEV
+│   ├── qa/            # Workspace Terraform QA
+│   └── prd/           # Workspace Terraform PRD
+├── dags/              # DAGs por entorno
+│   ├── dev/
+│   ├── qa/
+│   └── prd/
+├── dataflow/          # Scripts Apache Beam
+│   ├── templates/
+│   └── scripts/
+├── looker/            # Dashboards y modelos Looker
+│   └── dashboards/
+├── cloudbuild/        # Pipelines CI/CD
+├── docs/              # Imágenes y diagramas de arquitectura
+└── README.md
 ```
 
 ---
 
-## 🔁 ETL con Airflow + Dataflow
+## ✅ Ventajas del Enfoque GCP Multientorno
 
-Archivo: `dag_as400_etl.py`
-
-- Define flujo de tareas
-- Ejecuta plantilla de Dataflow
-- Puede adaptarse para Beam personalizado
-
----
-
-## 📊 Visualización con Looker
-
-- Explora datasets de BigQuery
-- Conecta métricas y tableros
-- Controla acceso con IAM y políticas de filas
+| Ventajas                            | Desventajas                                        |
+| ----------------------------------- | -------------------------------------------------- |
+| Separación robusta entre entornos   | Mayor esfuerzo inicial en infraestructura          |
+| CI/CD trazable con rollback         | Gestión avanzada de IAM y seguridad                |
+| Auditoría completa por logs         | Costos más altos sin buena gobernanza FinOps       |
+| Escalabilidad horizontal automática | Requiere monitoreo continuo y alertas configuradas |
 
 ---
 
-## 📦 Contenido del ZIP
+## 🖼️ Diagramas de Arquitectura
 
-- `main.tf`: Infraestructura en Terraform
-- `cloudbuild.yaml`: CI/CD automatizado
-- `dag_as400_etl.py`: DAG de ejemplo
+![Layout general GCP](docs/Layout_GCP.png)  
+![Layout ETL 10 julio](docs/Layout_10_jul_2025.png)  
+![Resumen GCP](docs/GCP.png)
+
+---
+
+## 📌 Recomendaciones
+
+- Usar etiquetas (`labels`) en todos los recursos: `env`, `owner`, `project`, `costcenter`
+- Configurar alertas presupuestarias por entorno
+- Monitorear Cloud Composer, Dataflow y BigQuery desde Cloud Logging y Cloud Monitoring
+- Habilitar versiones y auditoría en buckets (`Object Versioning`)
+- Usar variables segregadas por entorno (`terraform.tfvars`) y backend GCS por workspace
 
 ---
 
-## 📄 Créditos
-
-Autor: Carlos Crudo  
-Organización: CloudSolutionsIoT®  
-Sitio: https://cloudsolutionsiot.com
-
----
+© Carlos Crudo 2025 - CloudSolutionsIoT®
